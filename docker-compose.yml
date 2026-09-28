@@ -1,0 +1,54 @@
+services:
+  app-dev:
+    container_name: svc-client-app-dev
+    build:
+      context: .
+      dockerfile: Dockerfile-test
+    volumes:
+      - ./src:/app/src:ro
+      - ./prisma:/app/prisma:ro
+      - ./test:/app/test:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ./eslint.config.mjs:/app/eslint.config.mjs:ro
+      - ./prisma.config.ts:/app/prisma.config.ts:ro
+      - ./jest.config.js:/app/jest.config.js:ro
+      - ./.env:/app/.env:ro
+      - ./package.json:/app/package.json:ro
+    depends_on:
+      - postgres
+    cap_add:
+      - NET_BIND_SERVICE
+    extra_hosts:
+      - "pg-ipv6.local:fd98:2dd6:8f48:1d99:dc28:e6e1::3"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@pg-ipv6.local:5432/mydb"
+      PORT: 80
+
+    networks:
+      shared-net:
+        ipv6_address: fd98:2dd6:8f48:1d99:dc28:e6e1::2
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: svc-client-postgres
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
+
+    networks:
+      shared-net:
+        ipv6_address: fd98:2dd6:8f48:1d99:dc28:e6e1::3
+
+    volumes:
+      - db:/var/lib/postgresql
+
+networks:
+  shared-net:
+    external: true
+    name: svc-net
+
+volumes:
+  db:

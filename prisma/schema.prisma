@@ -5,9 +5,72 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model ClientVersion {
+  id        String   @id @default(uuid())
+  version   String   @unique
+  filename  String
+  path      String
+  size      BigInt
+  sha256    String
+  createdAt DateTime @default(now())
+
+  libraries ClientLibrary[]
+}
+
+model Library {
+  id        String   @id @default(uuid())
+  name      String
+  version   String
+  filename  String
+  path      String
+  size      BigInt
+  sha256    String
+  createdAt DateTime @default(now())
+
+  clients ClientLibrary[]
+
+  @@unique([name, version])
+}
+
+model ClientLibrary {
+  clientVersionId String
+  libraryId       String
+
+  clientVersion ClientVersion @relation(fields: [clientVersionId], references: [id], onDelete: Cascade)
+  library       Library       @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  @@id([clientVersionId, libraryId])
+}
+
+model Instance {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plugins Plugin[]
+}
+
+model Plugin {
+  id        String   @id @default(uuid())
+  name      String
+  version   String
+  filename  String
+  path      String
+  size      BigInt
+  sha256    String
+  createdAt DateTime @default(now())
+
+  instanceId String
+  instance   Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, name])
 }
